@@ -64,11 +64,17 @@ void gps_manager_init(GPSManager *manager) {
     gps_connection_logged = false;
     gps_timeout_detected = false;
 
-    nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
-    uint8_t current_rx_pin = settings_get_gps_rx_pin(&G_Settings); //load custom pin from NVS settings
 
-    if (current_rx_pin == 0) { // if a custom pin was set this will be > 0. If its zero we can assume no custom pin was set and thus should use the config param
-        current_rx_pin = CONFIG_GPS_UART_RX_PIN;
+
+    nmea_parser_config_t config = NMEA_PARSER_CONFIG_DEFAULT();
+    uint8_t current_rx_pin=0; 
+    uint8_t custom_gps_pin=settings_get_gps_rx_pin(&G_Settings); //load custom pin from NVS settings
+
+#ifdef CONFIG_HAS_GPS // need to verify we have gps enabled
+    current_rx_pin = CONFIG_GPS_UART_RX_PIN;
+#endif   
+    if (custom_gps_pin > 0) { // if a custom pin was set this will be > 0. If its zero we can assume no custom pin was set.
+    current_rx_pin=custom_gps_pin;
     }
 
     printf("GPS RX: IO%d\n", current_rx_pin);
