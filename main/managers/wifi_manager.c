@@ -1021,6 +1021,7 @@ esp_err_t wifi_manager_start_evil_portal(const char *URLorFilePath, const char *
     dnsserver.ip.type = ESP_IPADDR_TYPE_V4;
     esp_netif_set_dns_info(wifiAP, ESP_NETIF_DNS_MAIN, &dnsserver);
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_AP, &ap_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
 
     start_portal_webserver();
 
