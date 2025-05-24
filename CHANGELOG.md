@@ -4,7 +4,7 @@
 
 ### Added
 
-- Support for ESP32C5
+- Support for ESP32C5 (some channels may not work as expected for now)
 - FlipperZero Devboard w/JCMK GPS module config file - #11 - @tototo31
 
 - Attacks
@@ -47,6 +47,7 @@
   - Deauth task now deauths on each AP's primary channel
   - Station scan now uses discovered AP channels for scanning
   - ESP32C5 shows band in AP scan results
+  - ESP32C6 and ESP32C5 show Security and if PMF is required in AP scan results
 
 - Display
 
