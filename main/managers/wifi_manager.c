@@ -2483,7 +2483,6 @@ void wifi_manager_print_scan_results_with_oui() {
             break;
         }
 
-        // Print access point information including BSSID
         printf("[%u] SSID: %s,\n"
                "     BSSID: %02X:%02X:%02X:%02X:%02X:%02X,\n"
                "     RSSI: %d,\n",
@@ -2492,16 +2491,64 @@ void wifi_manager_print_scan_results_with_oui() {
                scanned_aps[i].bssid[2], scanned_aps[i].bssid[3],
                scanned_aps[i].bssid[4], scanned_aps[i].bssid[5],
                scanned_aps[i].rssi);
-#ifdef CONFIG_IDF_TARGET_ESP32C5
+
+#ifdef CONFIG_IDF_TARGET_ESP32C5 && CONFIG_IDF_TARGET_ESP32C6
         {
             int ch = scanned_aps[i].primary;
             const char *band_str = (ch > 14) ? "5GHz" : "2.4GHz";
-            printf("      Band: %s,\n", band_str);
+            printf("     Band: %s,\n", band_str);
+            
+            const char *auth_str = "Unknown";
+            const char *pmf_str = NULL;
+            
+            switch (scanned_aps[i].authmode) {
+                case WIFI_AUTH_OPEN:
+                    auth_str = "Open";
+                    break;
+                case WIFI_AUTH_WEP:
+                    auth_str = "WEP";
+                    break;
+                case WIFI_AUTH_WPA_PSK:
+                    auth_str = "WPA";
+                    break;
+                case WIFI_AUTH_WPA2_PSK:
+                    auth_str = "WPA2";
+                    break;
+                case WIFI_AUTH_WPA_WPA2_PSK:
+                    auth_str = "WPA/WPA2";
+                    break;
+                case WIFI_AUTH_WPA2_ENTERPRISE:
+                    auth_str = "WPA2-Enterprise";
+                    break;
+                case WIFI_AUTH_WPA3_PSK:
+                    auth_str = "WPA3";
+                    pmf_str = "Required";
+                    break;
+                case WIFI_AUTH_WPA2_WPA3_PSK:
+                    auth_str = "WPA2/WPA3";
+                    pmf_str = "Required (WPA3)";
+                    break;
+                case WIFI_AUTH_WAPI_PSK:
+                    auth_str = "WAPI";
+                    break;
+                case WIFI_AUTH_WPA3_ENTERPRISE:
+                    auth_str = "WPA3-Enterprise";
+                    pmf_str = "Required";
+                    break;
+                default:
+                    auth_str = "Unknown";
+                    break;
+            }
+            
+            if (pmf_str) {
+                printf("     Security: %s\n     PMF: %s\n", auth_str, pmf_str);
+            } else {
+                printf("     Security: %s\n", auth_str);
+            }
         }
 #endif
         printf("     Company: %s\n", company_str);
 
-        // Log information in terminal view including BSSID
         TERMINAL_VIEW_ADD_TEXT("[%u] SSID: %s,\n"
                                "     BSSID: %02X:%02X:%02X:%02X:%02X:%02X,\n"
                                "     RSSI: %d,\n",
@@ -2510,11 +2557,64 @@ void wifi_manager_print_scan_results_with_oui() {
                                scanned_aps[i].bssid[2], scanned_aps[i].bssid[3],
                                scanned_aps[i].bssid[4], scanned_aps[i].bssid[5],
                                scanned_aps[i].rssi);
+
 #ifdef CONFIG_IDF_TARGET_ESP32C5
         {
             int ch = scanned_aps[i].primary;
             const char *band_str = (ch > 14) ? "5GHz" : "2.4GHz";
-            TERMINAL_VIEW_ADD_TEXT("      Band: %s,\n", band_str);
+            TERMINAL_VIEW_ADD_TEXT("     Band: %s,\n", band_str);
+            
+            const char *auth_str = "Unknown";
+            const char *pmf_str = NULL;
+            
+            switch (scanned_aps[i].authmode) {
+                case WIFI_AUTH_OPEN:
+                    auth_str = "Open";
+                    pmf_str = "Not Supported";
+                    break;
+                case WIFI_AUTH_WEP:
+                    auth_str = "WEP";
+                    pmf_str = "Not Supported";
+                    break;
+                case WIFI_AUTH_WPA_PSK:
+                    auth_str = "WPA";
+                    pmf_str = "Not Supported";
+                    break;
+                case WIFI_AUTH_WPA2_PSK:
+                    auth_str = "WPA2";
+                    pmf_str = "Optional";
+                    break;
+                case WIFI_AUTH_WPA_WPA2_PSK:
+                    auth_str = "WPA/WPA2";
+                    pmf_str = "Optional";
+                    break;
+                case WIFI_AUTH_WPA2_ENTERPRISE:
+                    auth_str = "WPA2-Enterprise";
+                    pmf_str = "Optional";
+                    break;
+                case WIFI_AUTH_WPA3_PSK:
+                    auth_str = "WPA3";
+                    pmf_str = "Required";
+                    break;
+                case WIFI_AUTH_WPA2_WPA3_PSK:
+                    auth_str = "WPA2/WPA3";
+                    pmf_str = "Required (WPA3)";
+                    break;
+                case WIFI_AUTH_WAPI_PSK:
+                    auth_str = "WAPI";
+                    pmf_str = "Not Applicable";
+                    break;
+                case WIFI_AUTH_WPA3_ENTERPRISE:
+                    auth_str = "WPA3-Enterprise";
+                    pmf_str = "Required";
+                    break;
+                default:
+                    auth_str = "Unknown";
+                    pmf_str = "Unknown";
+                    break;
+            }
+            
+            TERMINAL_VIEW_ADD_TEXT("     Security: %s\n      PMF: %s,\n", auth_str, pmf_str);
         }
 #endif
         TERMINAL_VIEW_ADD_TEXT("     Company: %s\n", company_str);
