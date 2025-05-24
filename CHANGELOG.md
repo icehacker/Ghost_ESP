@@ -5,6 +5,7 @@
 ### Added
 
 - Support for ESP32C5
+- FlipperZero Devboard w/JCMK GPS module config file - #11 - @tototo31
 
 - Attacks
   - Deauthentication & DoS
@@ -73,6 +74,7 @@
   - Make congestion command ASCII-only for compatibility
   - Change display EP option to start default EP with a default SSID "FreeWiFi"
   - Update congestion to work with dualband channels
+  - Make GPS formatting renderable on devices w/ a limited font - #13 - @tototo31 
 
 - Power
   - Suspend LVGL, status bar update timer, and misc tasks when backlight is off
@@ -112,6 +114,7 @@
   - Actually open a CSV file for wardriving when an SD card is present
   - Fix CSV file timestamp to reflect GPS date/time on SD card close
   - Reset GPS timeout flag on initialization
+  - Assign gps RX pin based on CONFIG if not explicitly set by the user - #12 - @tototo31
 
 ## Revival v1.4.9
 
