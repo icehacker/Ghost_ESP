@@ -30,7 +30,7 @@ endif()
 
 
 message(STATUS "M5GFX use components = ${COMPONENT_REQUIRES}")
-if(NOT IDF_TARGET STREQUAL "esp32c5")
+if(NOT IDF_TARGET STREQUAL "esp32c5" AND NOT IDF_TARGET STREQUAL "esp32c6")
     register_component()
 else()
     message(STATUS "Skipping M5GFX component for esp32c5 target")
