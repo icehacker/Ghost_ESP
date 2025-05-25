@@ -619,25 +619,25 @@ void hardware_input_task(void *pvParameters) {
           InputEvent event;
           event.type = INPUT_TYPE_JOYSTICK;
 
-          printf("Unhandled key value: %d\n", key_value);
+          printf("Input key value: %d\n", key_value);
 
           switch (key_value) {
           case 0x29: // ESC key HID code
             event.data.joystick_index = 2;
             break;
-          case 180:
+          case 180: //enter key
             event.data.joystick_index = 1;
             break;
-          case 39:
+          case 39: //left arrow
             event.data.joystick_index = 0;
             break;
-          case 158:
+          case 158: //up arrow
             event.data.joystick_index = 2;
             break;
-          case 30:
+          case 30: //right arrow
             event.data.joystick_index = 3;
             break;
-          case 56:
+          case 56: // down arrow
             event.data.joystick_index = 4;
             break;
           default:
