@@ -558,7 +558,7 @@ void set_backlight_brightness(uint8_t percentage) {
   if (percentage > 1) {
     percentage = 1;
   }
-
+  gpio_set_direction(CONFIG_LV_DISP_PIN_BCKL, GPIO_MODE_OUTPUT); // probably should be a part of the init process
   gpio_set_level(CONFIG_LV_DISP_PIN_BCKL, percentage);
   if (percentage == 0) {
     if (status_update_timer) lv_timer_pause(status_update_timer);
@@ -732,6 +732,14 @@ void hardware_input_task(void *pvParameters) {
       ESP_LOGI(TAG, "Display timeout reached, dimming backlight");
       set_backlight_brightness(0);
       is_backlight_dimmed = true;
+    }
+    else if (is_backlight_dimmed && (xTaskGetTickCount() - last_touch_time < pdMS_TO_TICKS(current_timeout)))
+    {
+      ESP_LOGD(TAG, "Display timeout check: last_touch=%lu, timeout=%lu",
+              (unsigned long)last_touch_time, (unsigned long)current_timeout);
+      ESP_LOGI(TAG, "Input detected, waking backlight");
+      set_backlight_brightness(1);
+      is_backlight_dimmed = false;
     }
      //end backlight dim logic
     // When backlight is off (dimmed), poll less frequently to save power
