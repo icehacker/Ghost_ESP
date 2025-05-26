@@ -3,7 +3,9 @@
 ## Revival v1.5.1
 
 - 'setcountry' command to set country code for esp32c5
-
+- backlight dimming fix for cardputer - @tototo31
+- handle button presses correctly on cardputer - @tototo31
+- fix inputs not waking screen on cardputer - @tototo31
 
 ## Revival v1.5
 
