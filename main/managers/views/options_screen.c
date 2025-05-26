@@ -162,9 +162,12 @@ void options_menu_create() {
 
     // Calculate heights considering status bar (20px) and scroll buttons
     const int STATUS_BAR_HEIGHT = 20;
-    const int BUTTON_AREA_HEIGHT = SCROLL_BTN_SIZE + SCROLL_BTN_PADDING * 2;
+#ifdef CONFIG_USE_TOUCHSCREEN
+    const int BUTTON_AREA_HEIGHT = SCROLL_BTN_SIZE + SCROLL_BTN_PADDING * 2; // set size of touch navigation buttons
     int container_height = screen_height - STATUS_BAR_HEIGHT - BUTTON_AREA_HEIGHT;
-
+#else
+    int container_height = screen_height - STATUS_BAR_HEIGHT;
+#endif
     menu_container = lv_list_create(root);
     lv_obj_set_style_radius(menu_container, 0, LV_PART_MAIN);
     // Adjust size and position
@@ -212,7 +215,7 @@ void options_menu_create() {
 
     select_option_item(0);
     display_manager_add_status_bar(options_menu_type_to_string(SelectedMenuType));
-
+#ifdef CONFIG_USE_TOUCHSCREEN // only show touch buttons if on a touch screen device.
     // Create scroll buttons and back button
     scroll_up_btn = lv_btn_create(root); // UP button on the LEFT
     lv_obj_set_size(scroll_up_btn, SCROLL_BTN_SIZE, SCROLL_BTN_SIZE);
@@ -251,7 +254,7 @@ void options_menu_create() {
     lv_obj_t *back_label = lv_label_create(back_btn);
     lv_label_set_text(back_label, LV_SYMBOL_LEFT " Back"); // Back symbol and text
     lv_obj_center(back_label);
-
+#endif
     createdTimeInMs = (unsigned long)(esp_timer_get_time() / 1000ULL);
 }
 
