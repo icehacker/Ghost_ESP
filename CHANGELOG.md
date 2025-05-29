@@ -22,6 +22,7 @@
 - hide touch interface on non-touch devices - @tototo31
 - fix cardputer settings menu crash
 - update pineap detection to work with ESP32C5
+- fix rabbit labs' phantom n cyd build boot issues
 
 ## Revival v1.5
 
