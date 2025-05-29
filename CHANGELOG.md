@@ -8,6 +8,10 @@
 - handle button presses correctly on cardputer - @tototo31
 - fix inputs not waking screen on cardputer - @tototo31
 - added warning that webui will disconnect you from the web interface when running wifi commands
+- bump M5GFX to 0.2.9
+- disable menu items in main menu if the device does not support them - @tototo31
+- hide touch interface on non-touch devices - @tototo31
+- wrap menu items once you hit the top or bottom of the screen - @tototo31
 
 ## Revival v1.5
 
