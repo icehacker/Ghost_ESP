@@ -9,11 +9,13 @@
 
 ### Changed
 
+- update pineap detection to use dualband channels with ESP32C5
 - backlight dimming fix for cardputer - @tototo31
 - handle button presses correctly on cardputer - @tototo31
 - fix inputs not waking screen on cardputer - @tototo31
 - bump M5GFX to 0.2.9
 - wrap menu items once you hit the top or bottom of the screen - @tototo31
+
 
 ### Bug Fixes
 
@@ -21,7 +23,6 @@
 - disable menu items in main menu if the device does not support them - @tototo31
 - hide touch interface on non-touch devices - @tototo31
 - fix cardputer settings menu crash
-- update pineap detection to work with ESP32C5
 - fix rabbit labs' phantom n cyd build boot issues
 
 ## Revival v1.5
