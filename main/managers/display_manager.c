@@ -623,6 +623,9 @@ void hardware_input_task(void *pvParameters) {
           InputEvent event;
           event.type = INPUT_TYPE_JOYSTICK;
 
+          char strChar[2] = {0};
+          sprintf(strChar, "%c", key_value);
+          printf("Pushing %s key\n", strChar);
           printf("Input key value: %d\n", key_value);
 
           switch (key_value) {
@@ -630,23 +633,23 @@ void hardware_input_task(void *pvParameters) {
             printf("Esc key\n");
             event.data.joystick_index = 2;
             break;
-          case 180: //enter key
+          case 40: //enter key
             printf("Enter key\n");
             event.data.joystick_index = 1;
             break;
-          case 39: //left arrow
+          case 44: //left arrow
             printf("Left key\n");
             event.data.joystick_index = 0;
            break;
-          case 158: //up arrow
+          case 59: //up arrow
             printf("Up key\n");
             event.data.joystick_index = 2;
             break;
-          case 30: //right arrow
+          case 47: //right arrow
             printf("Right key\n");
             event.data.joystick_index = 3;
             break;
-          case 56: // down arrow
+          case 46: // down arrow
             printf("Down key\n");
             event.data.joystick_index = 4;
             break;
