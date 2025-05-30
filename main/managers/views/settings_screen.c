@@ -1,6 +1,8 @@
 #include "managers/views/settings_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 #define SCROLL_BTN_SIZE 40
 #define SCROLL_BTN_PADDING 5
@@ -176,7 +178,13 @@ static void back_button_cb(lv_event_t *e) {
 }
 
 static void event_handler(InputEvent *ev) {
-    if (ev->type == INPUT_TYPE_TOUCH) {
+    if (ev->type == INPUT_TYPE_KEYBOARD) {
+        uint8_t key = ev->data.key_value;
+        if (key == 27 || key == '`') {
+            display_manager_switch_view(&main_menu_view);
+            return;
+        }
+    } else if (ev->type == INPUT_TYPE_TOUCH) {
         lv_indev_data_t *data = &ev->data.touch_data;
         if (data->state == LV_INDEV_STATE_PR) {
             touch_started = true;

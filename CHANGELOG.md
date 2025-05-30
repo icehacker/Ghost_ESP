@@ -7,7 +7,10 @@
 
 ### Changed
 
-- Enable Cardputer's LED in config - @tototo31
+- Cardputer
+  - Enable Cardputer's LED in config - @tototo31
+  - Get cardputer keys working - @tototo31
+  - Use backtick key to return to main menu 
 
 ### Bug Fixes
 
