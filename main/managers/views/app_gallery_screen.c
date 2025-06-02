@@ -2,8 +2,11 @@
 #include "managers/views/flappy_ghost_screen.h"
 #include "managers/views/main_menu_screen.h"
 #include "managers/views/music_visualizer.h"
+#include "esp_log.h"
 #include <stdio.h>
 #include <string.h>
+
+static const char *TAG = "app_gallery_screen";
 
 lv_obj_t *apps_container;
 static int selected_app_index = 0;
