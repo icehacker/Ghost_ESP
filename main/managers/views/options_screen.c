@@ -10,7 +10,11 @@
 #include "managers/views/number_pad_screen.h"
 #include "managers/wifi_manager.h"
 #include "managers/settings_manager.h"
+#include "esp_log.h"
 #include <stdio.h>
+
+static const char *TAG = "options_screen";
+
 
 EOptionsMenuType SelectedMenuType = OT_Wifi;
 int selected_item_index = 0;
