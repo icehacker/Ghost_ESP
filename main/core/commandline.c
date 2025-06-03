@@ -989,17 +989,19 @@ void handle_help(int argc, char **argv) {
 
     printf("attack\n");
     printf("    Description: Launch an attack (e.g., deauthentication attack).\n");
+    printf("                 Supports multiple selected APs when using 'select -a 1,2,3'.\n");
     printf("    Usage: attack -d (deauth) | attack -e (EAPOL logoff) | attack -s (SAE flood)\n");
     printf("    Arguments:\n");
-    printf("        -d  : Start deauth attack\n");
+    printf("        -d  : Start deauth attack (supports multiple APs)\n");
     printf("        -e  : Start EAPOL logoff attack\n");
     printf("        -s  : Start SAE flood attack (ESP32-C5/C6 only)\n");
     printf("\n");
     TERMINAL_VIEW_ADD_TEXT("attack\n");
     TERMINAL_VIEW_ADD_TEXT("    Description: Launch an attack (e.g., deauthentication attack).\n");
+    TERMINAL_VIEW_ADD_TEXT("                 Supports multiple selected APs when using 'select -a 1,2,3'.\n");
     TERMINAL_VIEW_ADD_TEXT("    Usage: attack -d (deauth) | attack -e (EAPOL logoff) | attack -s (SAE flood)\n");
     TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
-    TERMINAL_VIEW_ADD_TEXT("        -d  : Start deauth attack\n");
+    TERMINAL_VIEW_ADD_TEXT("        -d  : Start deauth attack (supports multiple APs)\n");
     TERMINAL_VIEW_ADD_TEXT("        -e  : Start EAPOL logoff attack\n");
     TERMINAL_VIEW_ADD_TEXT("        -s  : Start SAE flood attack (ESP32-C5/C6 only)\n");
     TERMINAL_VIEW_ADD_TEXT("\n");
