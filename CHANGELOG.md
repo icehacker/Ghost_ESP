@@ -11,6 +11,7 @@
 
 - Commands
   - Allow selection of multiple APs (eg. select -a 2,3,4)
+  TODO - add comma to display numpad
 
 ### Changed
 
