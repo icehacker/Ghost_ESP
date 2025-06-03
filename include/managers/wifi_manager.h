@@ -21,6 +21,8 @@ extern station_ap_pair_t station_ap_list[MAX_STATIONS];
 extern int station_count;
 extern wifi_ap_record_t *scanned_aps;
 extern wifi_ap_record_t selected_ap;
+extern wifi_ap_record_t *selected_aps;
+extern int selected_ap_count;
 extern void *beacon_task_handle;
 extern void *deauth_task_handle;
 extern int beacon_task_running;
@@ -120,6 +122,12 @@ void wifi_manager_get_scan_results_data(uint16_t *count, wifi_ap_record_t **aps)
 
 // Select an access point from the scan results based on index
 void wifi_manager_select_ap(int index);
+
+// Select multiple access points from the scan results based on indices array
+void wifi_manager_select_multiple_aps(int *indices, int count);
+
+// Get access to the selected APs array for commands that support multiple APs
+void wifi_manager_get_selected_aps(wifi_ap_record_t **aps, int *count);
 
 // Select a station from the station list based on index
 void wifi_manager_select_station(int index);

@@ -133,6 +133,8 @@ static char domain_str[128] = "";
 EventGroupHandle_t wifi_event_group;
 const int WIFI_CONNECTED_BIT = BIT0;
 wifi_ap_record_t selected_ap;
+wifi_ap_record_t *selected_aps = NULL;
+int selected_ap_count = 0;
 static station_ap_pair_t selected_station;
 static bool station_selected = false;
 bool redirect_handled = false;
@@ -1313,6 +1315,12 @@ void wifi_manager_stop_scan() {
             free(scanned_aps);
             scanned_aps = NULL;
         }
+        
+        if (selected_aps != NULL) {
+            free(selected_aps);
+            selected_aps = NULL;
+            selected_ap_count = 0;
+        }
 
         scanned_aps = calloc(initial_ap_count, sizeof(wifi_ap_record_t));
         if (scanned_aps == NULL) {
@@ -1607,6 +1615,19 @@ void wifi_manager_select_ap(int index) {
 
     selected_ap = scanned_aps[index];
 
+    if (selected_aps != NULL) {
+        free(selected_aps);
+        selected_aps = NULL;
+    }
+
+    selected_aps = malloc(sizeof(wifi_ap_record_t));
+    if (selected_aps != NULL) {
+        selected_aps[0] = selected_ap;
+        selected_ap_count = 1;
+    } else {
+        selected_ap_count = 0;
+    }
+
     char sanitized_ssid[33];
     sanitize_ssid_and_check_hidden(selected_ap.ssid, sanitized_ssid, sizeof(sanitized_ssid));
 
@@ -1621,6 +1642,88 @@ void wifi_manager_select_ap(int index) {
 
     printf("Selected Access Point Successfully\n");
     TERMINAL_VIEW_ADD_TEXT("Selected Access Point Successfully\n");
+}
+
+void wifi_manager_select_multiple_aps(int *indices, int count) {
+    if (ap_count == 0) {
+        printf("No access points found\n");
+        TERMINAL_VIEW_ADD_TEXT("No access points found\n");
+        return;
+    }
+
+    if (scanned_aps == NULL) {
+        printf("No AP info available (scanned_aps is NULL)\n");
+        TERMINAL_VIEW_ADD_TEXT("No AP info available (scanned_aps is NULL)\n");
+        return;
+    }
+
+    if (count <= 0) {
+        printf("Invalid count: %d\n", count);
+        TERMINAL_VIEW_ADD_TEXT("Invalid count: %d\n", count);
+        return;
+    }
+
+    for (int i = 0; i < count; i++) {
+        if (indices[i] < 0 || indices[i] >= ap_count) {
+            printf("Invalid index: %d. Index should be between 0 and %d\n", indices[i], ap_count - 1);
+            TERMINAL_VIEW_ADD_TEXT("Invalid index: %d. Index should be between 0 and %d\n", indices[i], ap_count - 1);
+            return;
+        }
+    }
+
+    if (selected_aps != NULL) {
+        free(selected_aps);
+        selected_aps = NULL;
+    }
+
+    selected_aps = malloc(count * sizeof(wifi_ap_record_t));
+    if (selected_aps == NULL) {
+        printf("Failed to allocate memory for selected APs\n");
+        TERMINAL_VIEW_ADD_TEXT("Failed to allocate memory for selected APs\n");
+        selected_ap_count = 0;
+        return;
+    }
+
+    selected_ap_count = count;
+
+    for (int i = 0; i < count; i++) {
+        selected_aps[i] = scanned_aps[indices[i]];
+    }
+
+    selected_ap = selected_aps[0];
+
+    printf("Selected %d Access Points:\n", count);
+    TERMINAL_VIEW_ADD_TEXT("Selected %d Access Points:\n", count);
+
+    for (int i = 0; i < count; i++) {
+        char sanitized_ssid[33];
+        sanitize_ssid_and_check_hidden(selected_aps[i].ssid, sanitized_ssid, sizeof(sanitized_ssid));
+
+        printf("[%d] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X%s\n",
+               i, sanitized_ssid,
+               selected_aps[i].bssid[0], selected_aps[i].bssid[1], selected_aps[i].bssid[2],
+               selected_aps[i].bssid[3], selected_aps[i].bssid[4], selected_aps[i].bssid[5],
+               (i == 0) ? " (Primary)" : "");
+
+        TERMINAL_VIEW_ADD_TEXT("[%d] SSID: %s, BSSID: %02X:%02X:%02X:%02X:%02X:%02X%s\n",
+               i, sanitized_ssid,
+               selected_aps[i].bssid[0], selected_aps[i].bssid[1], selected_aps[i].bssid[2],
+               selected_aps[i].bssid[3], selected_aps[i].bssid[4], selected_aps[i].bssid[5],
+               (i == 0) ? " (Primary)" : "");
+    }
+
+    printf("Multiple APs selected successfully. Primary AP: %s\n", 
+           (char*)selected_ap.ssid);
+    TERMINAL_VIEW_ADD_TEXT("Multiple APs selected successfully.\n");
+}
+
+void wifi_manager_get_selected_aps(wifi_ap_record_t **aps, int *count) {
+    if (aps != NULL) {
+        *aps = selected_aps;
+    }
+    if (count != NULL) {
+        *count = selected_ap_count;
+    }
 }
 
 void wifi_manager_select_station(int index) {

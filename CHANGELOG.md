@@ -8,7 +8,10 @@
 - Attacks
   - EAPOL Logoff Attack
   - SAE Flood Attack
-  
+
+- Commands
+  - Allow selection of multiple APs (eg. select -a 2,3,4)
+
 ### Changed
 
 - Enable Cardputer's LED in config - @tototo31

@@ -230,19 +230,48 @@ void handle_stop_deauth(int argc, char **argv) {
 
 void handle_select_cmd(int argc, char **argv) {
     if (argc != 3) {
-        printf("Usage: select -a <number> or select -s <number>\n");
-        TERMINAL_VIEW_ADD_TEXT("Usage: select -a <number> or select -s <number>\n");
+        printf("Usage: select -a <number[,number,...]> or select -s <number>\n");
+        TERMINAL_VIEW_ADD_TEXT("Usage: select -a <number[,number,...]> or select -s <number>\n");
         return;
     }
 
     if (strcmp(argv[1], "-a") == 0) {
-        char *endptr;
-        int num = (int)strtol(argv[2], &endptr, 10);
-        if (*endptr == '\0') {
-            wifi_manager_select_ap(num);
+        char *input = argv[2];
+        char *comma = strchr(input, ',');
+        
+        if (comma == NULL) {
+            char *endptr;
+            int num = (int)strtol(input, &endptr, 10);
+            if (*endptr == '\0') {
+                wifi_manager_select_ap(num);
+            } else {
+                printf("Error: is not a valid number.\n");
+                TERMINAL_VIEW_ADD_TEXT("Error: is not a valid number.\n");
+            }
         } else {
-            printf("Error: is not a valid number.\n");
-            TERMINAL_VIEW_ADD_TEXT("Error: is not a valid number.\n");
+            int indices[32];
+            int count = 0;
+            char *token = strtok(input, ",");
+            
+            while (token != NULL && count < 32) {
+                char *endptr;
+                int num = (int)strtol(token, &endptr, 10);
+                if (*endptr == '\0') {
+                    indices[count++] = num;
+                } else {
+                    printf("Error: '%s' is not a valid number.\n", token);
+                    TERMINAL_VIEW_ADD_TEXT("Error: '%s' is not a valid number.\n", token);
+                    return;
+                }
+                token = strtok(NULL, ",");
+            }
+            
+            if (count > 0) {
+                wifi_manager_select_multiple_aps(indices, count);
+            } else {
+                printf("Error: No valid indices found.\n");
+                TERMINAL_VIEW_ADD_TEXT("Error: No valid indices found.\n");
+            }
         }
     } else if (strcmp(argv[1], "-s") == 0) {
         char *endptr;
@@ -265,8 +294,8 @@ void handle_select_cmd(int argc, char **argv) {
         }
 #endif
     } else {
-        printf("Invalid option. Usage: select -a <number> or select -s <number>\n");
-        TERMINAL_VIEW_ADD_TEXT("Invalid option. Usage: select -a <number> or select -s <number>\n");
+        printf("Invalid option. Usage: select -a <number[,number,...]> or select -s <number>\n");
+        TERMINAL_VIEW_ADD_TEXT("Invalid option. Usage: select -a <number[,number,...]> or select -s <number>\n");
     }
 }
 
@@ -1022,21 +1051,27 @@ void handle_help(int argc, char **argv) {
     TERMINAL_VIEW_ADD_TEXT("    Usage: stopdeauth\n\n");
 
     printf("select\n");
-    printf("    Description: Select an access point, station, or AirTag by index from the scan "
+    printf("    Description: Select access point(s), station, or AirTag by index from the scan "
            "results.\n");
-    printf("    Usage: select -a <num> | select -s <num> | select -airtag <num>\n");
+    printf("    Usage: select -a <num[,num,...]> | select -s <num> | select -airtag <num>\n");
     printf("    Arguments:\n");
-    printf("        -a      : AP selection index\n");
+    printf("        -a      : AP selection index (supports multiple: 1,3,5)\n");
     printf("        -s      : Station selection index\n");
-    printf("        -airtag : AirTag selection index\n\n");
+    printf("        -airtag : AirTag selection index\n");
+    printf("    Examples:\n");
+    printf("        select -a 4      : Select single AP at index 4\n");
+    printf("        select -a 1,3,5  : Select multiple APs at indices 1, 3, and 5\n\n");
     TERMINAL_VIEW_ADD_TEXT("select\n");
-    TERMINAL_VIEW_ADD_TEXT("    Description: Select an access point, station, or AirTag by index "
+    TERMINAL_VIEW_ADD_TEXT("    Description: Select access point(s), station, or AirTag by index "
                            "from the scan results.\n");
-    TERMINAL_VIEW_ADD_TEXT("    Usage: select -a <num> | select -s <num> | select -airtag <num>\n");
+    TERMINAL_VIEW_ADD_TEXT("    Usage: select -a <num[,num,...]> | select -s <num> | select -airtag <num>\n");
     TERMINAL_VIEW_ADD_TEXT("    Arguments:\n");
-    TERMINAL_VIEW_ADD_TEXT("        -a      : AP selection index\n");
+    TERMINAL_VIEW_ADD_TEXT("        -a      : AP selection index (supports multiple: 1,3,5)\n");
     TERMINAL_VIEW_ADD_TEXT("        -s      : Station selection index\n");
-    TERMINAL_VIEW_ADD_TEXT("        -airtag : AirTag selection index\n\n");
+    TERMINAL_VIEW_ADD_TEXT("        -airtag : AirTag selection index\n");
+    TERMINAL_VIEW_ADD_TEXT("    Examples:\n");
+    TERMINAL_VIEW_ADD_TEXT("        select -a 4      : Select single AP at index 4\n");
+    TERMINAL_VIEW_ADD_TEXT("        select -a 1,3,5  : Select multiple APs at indices 1, 3, and 5\n\n");
 
     printf("startportal\n");
     printf("    Description: Start an Evil Portal using a local file or the default embedded page.\n");
