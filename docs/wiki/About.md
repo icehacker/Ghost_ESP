@@ -18,8 +18,8 @@ The following ESP32 models are officially supported:
 - **ESP32-S3-Cardputer**: Compact design with a built-in display and keyboard
 - **MarauderV6 & AwokDual**: 240x320 touchscreen models
 - **AwokMini**: 128x128 display with joystick for navigation
-  **Awok ESP32 v5**
-  **LilyGo T-Watch S3**
+- **Awok ESP32 v5**
+- **LilyGo T-Watch S3**
 
 ### Generic Boards
 
@@ -28,7 +28,7 @@ The following ESP32 models are officially supported:
 - **ESP32-C3**
 - **ESP32-S3**
 - **ESP32-C6**: Partial support with limited feature availability
-  **ESP32-C5**: Partial support with limited feature availability
+- **ESP32-C5**: Partial support with limited feature availability
 
 ## Important Considerations
 
@@ -48,8 +48,8 @@ The following ESP32 models are officially supported:
 - **DHCP-Starve attack**
 - **New UI** for a better user experience
 - **AirTag selection and spoofing**
-  **direct station deauthentication**
-  **BLE Wardriving**: with GPS Logging
+- **direct station deauthentication**
+- **BLE Wardriving**: with GPS Logging
 
 ### Features Under Development
 
