@@ -229,6 +229,8 @@ static void handle_apps_button_press(int button) {
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         handle_apps_button_press(event->data.joystick_index);
+    } else if (event->type == INPUT_TYPE_KEYBOARD) { // dummy for handling keyboard input
+      return;
     }
 }
 

@@ -174,6 +174,8 @@ static void menu_item_event_handler(InputEvent *event) {
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
         handle_hardware_button_press(button);
+    } else if (event->type == INPUT_TYPE_KEYBOARD){ //dummy for handling keyboard input
+        return;
     }
 }
 

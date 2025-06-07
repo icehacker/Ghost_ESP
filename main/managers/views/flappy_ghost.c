@@ -391,6 +391,8 @@ void flappy_bird_view_hardwareinput_callback(InputEvent *event) {
       } else if (event->data.joystick_index == 0) {
         display_manager_switch_view(&main_menu_view);
       }
+    } else if (event->type == INPUT_TYPE_KEYBOARD) { // dummy for handling keyboard input during game over
+      return;
     }
     return;
   }
@@ -402,7 +404,9 @@ void flappy_bird_view_hardwareinput_callback(InputEvent *event) {
     }
   } else if (event->type == INPUT_TYPE_TOUCH) {
     bird_velocity = settings.flap_strength;
-  }
+  } else if (event->type == INPUT_TYPE_KEYBOARD) { // dummy for handling keyboard input while playing
+      return;
+    }
 }
 
 // Function to retrieve the input callback
