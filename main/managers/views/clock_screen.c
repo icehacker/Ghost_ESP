@@ -35,8 +35,9 @@ static void clock_event_handler(InputEvent *event) {
         ESP_LOGI(TAG, "Joystick input type");
         display_manager_switch_view(&main_menu_view);
     } else if (event->type == INPUT_TYPE_KEYBOARD){
-        ESP_LOGW(TAG, "keyboard input type; unhandled");
-        return;
+        ESP_LOGI(TAG, "keyboard input type");
+        display_manager_switch_view(&main_menu_view);
+
     }
 }
 

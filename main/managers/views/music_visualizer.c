@@ -45,7 +45,7 @@ void handle_hardware_input_music_callback(InputEvent *event) {
       display_manager_switch_view(&main_menu_view);
     }
   } else if (event->type == INPUT_TYPE_KEYBOARD){ 
-    ESP_LOGW(TAG, "keyboard event; unhandled");
+    ESP_LOGW(TAG, "keyboard event");
     uint8_t key = event->data.key_value;
     if (key == 27 || key == '`'){
     display_manager_switch_view(&main_menu_view);
