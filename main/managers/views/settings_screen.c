@@ -3,9 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "esp_log.h"
+
 
 #define SCROLL_BTN_SIZE 40
 #define SCROLL_BTN_PADDING 5
+
+static const char *TAG = "SettingsScreen";
+
 
 // Settings screen UI elements
 static lv_obj_t *root_container;
@@ -177,12 +182,39 @@ static void back_button_cb(lv_event_t *e) {
     else display_manager_switch_view(&main_menu_view);
 }
 
+void move_focus(bool direction){ // direction == true for down false for up
+
+    lv_obj_clear_state(menu_buttons[selected_menu_idx], LV_STATE_FOCUSED);
+    if (direction){
+        selected_menu_idx = (selected_menu_idx + 1) % menu_button_count;
+    }
+    else {
+        selected_menu_idx = (selected_menu_idx + menu_button_count - 1) % menu_button_count;
+    }
+    lv_obj_add_state(menu_buttons[selected_menu_idx], LV_STATE_FOCUSED);
+    lv_obj_scroll_to_view(menu_buttons[selected_menu_idx], LV_ANIM_OFF);
+}
+
 static void event_handler(InputEvent *ev) {
     if (ev->type == INPUT_TYPE_KEYBOARD) {
-        uint8_t key = ev->data.key_value;
-        if (key == 27 || key == '`') {
-            display_manager_switch_view(&main_menu_view);
-            return;
+        uint8_t keyValue = ev->data.key_value;
+
+        if ((keyValue == 44 || keyValue == ',') || (keyValue == 59 || keyValue == ';')) { // Left / up
+            ESP_LOGI(TAG, "Left/Up button pressed\n");
+            move_focus(false);
+        } else if ((keyValue == 47 || keyValue == '/') || (keyValue == 46 || keyValue == '.')) { // Right / down
+            ESP_LOGI(TAG, "Right/Down button pressed\n");
+            move_focus(true);
+        } else if (keyValue == 40) { // Select
+            ESP_LOGI(TAG, "Enter button pressed\n");
+            lv_event_send(menu_buttons[selected_menu_idx], LV_EVENT_CLICKED, NULL);
+        } else if (keyValue == 29 || keyValue == '`') { // esc
+            ESP_LOGI(TAG, "Esc button pressed\n");
+            if (back_btn) {
+                lv_event_send(back_btn, LV_EVENT_CLICKED, NULL);
+            } else {
+                back_button_cb(NULL);
+            }
         }
     } else if (ev->type == INPUT_TYPE_TOUCH) {
         lv_indev_data_t *data = &ev->data.touch_data;
@@ -229,15 +261,9 @@ static void event_handler(InputEvent *ev) {
     } else if (ev->type == INPUT_TYPE_JOYSTICK) {
         int b = ev->data.joystick_index;
         if (b == 2) { // up/esc: move focus up
-            lv_obj_clear_state(menu_buttons[selected_menu_idx], LV_STATE_FOCUSED);
-            selected_menu_idx = (selected_menu_idx + menu_button_count - 1) % menu_button_count;
-            lv_obj_add_state(menu_buttons[selected_menu_idx], LV_STATE_FOCUSED);
-            lv_obj_scroll_to_view(menu_buttons[selected_menu_idx], LV_ANIM_OFF);
+            move_focus(false);
         } else if (b == 4) { // down: move focus down
-            lv_obj_clear_state(menu_buttons[selected_menu_idx], LV_STATE_FOCUSED);
-            selected_menu_idx = (selected_menu_idx + 1) % menu_button_count;
-            lv_obj_add_state(menu_buttons[selected_menu_idx], LV_STATE_FOCUSED);
-            lv_obj_scroll_to_view(menu_buttons[selected_menu_idx], LV_ANIM_OFF);
+            move_focus(true);
         } else if (b == 1 || b == 3) { // enter/right: activate
             lv_event_send(menu_buttons[selected_menu_idx], LV_EVENT_CLICKED, NULL);
         } else if (b == 0) { // left: go back
