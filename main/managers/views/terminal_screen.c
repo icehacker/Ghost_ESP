@@ -339,14 +339,18 @@ void terminal_view_hardwareinput_callback(InputEvent *event) {
       scroll_terminal_down();
     }
   } else if (event->type == INPUT_TYPE_KEYBOARD) {
-    ESP_LOGW(TAG, "keyboard event");
+    ESP_LOGI(TAG, "keyboard event");
     uint8_t key = event->data.key_value;
-    if (key == 27 || key == '`') {
+    if (key == 29 || key == '`') {
       stop_all_operations();
-      return;
+    } else if (key == 59 || key == ';') {// up arrow
+      scroll_terminal_up();
+    } else if (key == 46 || key == '.') {      //down arrow
+      scroll_terminal_down();
     }
   }
 }
+
 
 
 void terminal_view_get_hardwareinput_callback(void **callback) {
