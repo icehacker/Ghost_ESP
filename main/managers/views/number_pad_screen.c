@@ -178,9 +178,9 @@ static void handle_hardware_button_press_number_pad(InputEvent *event) {
         bool is_numeric = false;
         int option_index;
         char *key_str[1];
-        ESP_LOGD(TAG, "Keyboard event: %c pressed", key_value);
-        sprintf(key_str, "%c", key_value); // convert keyvalue to str for comparisons
-
+        ESP_LOGI(TAG, "Keyboard event: %c pressed", key_value);
+        sprintf(key_str, "%c", key_value); // convert key_value to str for comparisons
+        int prev_cursor_pos = cursor_pos;
 
         for (int i = 0; i < sizeof(options)/sizeof(options[0]); i++){
             ESP_LOGD(TAG, "Checking key pressed value: %s against %s", key_str, options[i]);
@@ -212,7 +212,50 @@ static void handle_hardware_button_press_number_pad(InputEvent *event) {
             submit_number();
             return;
         }
-
+        else if (key_value == 44 || key_value == ',') { // Left
+            ESP_LOGI(TAG, "Left button pressed\n");
+            cursor_pos = (cursor_pos > 0) ? cursor_pos - 1 : 12;
+        } 
+        else if ((key_value == 47 || key_value == '/') ) { // Right
+            ESP_LOGI(TAG, "Right button pressed\n");
+            cursor_pos = (cursor_pos < 12) ? cursor_pos + 1 : 0;
+        }
+        else if (key_value == 59 || key_value == ';'){ //up
+            ESP_LOGI(TAG, "Up button pressed");
+            if (cursor_pos >= 5) {
+                cursor_pos -= 5;
+            } else if (cursor_pos >= 0 && cursor_pos <= 4) {
+                cursor_pos = (cursor_pos == 0) ? 10 : (cursor_pos == 1) ? 11 : (cursor_pos == 2) ? 12 : cursor_pos + 5;
+            }
+        } else if (key_value == 46 || key_value == '.'){ //down
+            ESP_LOGI(TAG, "Down button pressed");
+            if (cursor_pos <= 7) {
+                cursor_pos += 5;
+            } else if (cursor_pos >= 10) {
+                cursor_pos = cursor_pos - 10;
+            }
+        } else if (key_value == 40){ //enter key
+            if (strcmp(options[cursor_pos], "DEL") == 0) {
+                remove_digit();
+                update_display();
+            } else if (strcmp(options[cursor_pos], "OK") == 0) {
+                submit_number();
+                return;
+            } else if (strcmp(options[cursor_pos], "BACK") == 0) {
+                display_manager_switch_view(&options_menu_view);
+                return;
+            } else {
+                add_digit(options[cursor_pos][0]);
+                update_display();
+            }
+        }
+        if (prev_cursor_pos != cursor_pos) {
+            lv_obj_t *options_container = lv_obj_get_child(root, 1);
+            for (int i = 0; i < 13; i++) {
+                lv_obj_t *label = lv_obj_get_child(options_container, i);
+                lv_obj_set_style_text_color(label, (i == cursor_pos) ? lv_color_hex(0x00FF00) : lv_color_hex(0xFFFFFF), 0);
+            }
+        }
     }
     else if (event->type == INPUT_TYPE_JOYSTICK) {
         int button = event->data.joystick_index;
