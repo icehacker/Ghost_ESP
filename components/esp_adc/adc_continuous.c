@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2016-2024 Espressif Systems (Shanghai) CO LTD
+ * SPDX-FileCopyrightText: 2016-2025 Espressif Systems (Shanghai) CO LTD
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -23,22 +23,27 @@
 #include "freertos/semphr.h"
 #include "freertos/timers.h"
 #include "freertos/ringbuf.h"
+#include "esp_private/esp_clk_tree_common.h"
+#include "esp_private/regi2c_ctrl.h"
 #include "esp_private/periph_ctrl.h"
 #include "esp_private/adc_private.h"
 #include "esp_private/adc_share_hw_ctrl.h"
 #include "esp_private/sar_periph_ctrl.h"
 #include "esp_clk_tree.h"
-#include "driver/gpio.h"
+#include "esp_private/gpio.h"
 #include "esp_adc/adc_continuous.h"
 #include "hal/adc_types.h"
 #include "hal/adc_hal.h"
 #include "hal/dma_types.h"
+#include "soc/soc_caps.h"
 #include "esp_memory_utils.h"
 #include "adc_continuous_internal.h"
 #include "esp_private/adc_dma.h"
 #include "adc_dma_internal.h"
 #if SOC_CACHE_INTERNAL_MEM_VIA_L1CACHE
 #include "esp_cache.h"
+#include "hal/cache_hal.h"
+#include "hal/cache_ll.h"
 #include "esp_private/esp_cache_private.h"
 #endif
 
@@ -119,7 +124,7 @@ static IRAM_ATTR bool adc_dma_intr(adc_continuous_ctx_t *adc_digi_ctx)
         }
     }
 #if SOC_CACHE_INTERNAL_MEM_VIA_L1CACHE
-    esp_err_t msync_ret = esp_cache_msync((void *)(adc_digi_ctx->hal.rx_desc), adc_digi_ctx->adc_desc_size, ESP_CACHE_MSYNC_FLAG_DIR_M2C);
+    esp_err_t msync_ret = esp_cache_msync((void *)(adc_digi_ctx->hal.rx_desc), adc_digi_ctx->adc_desc_size, ESP_CACHE_MSYNC_FLAG_DIR_C2M | ESP_CACHE_MSYNC_FLAG_INVALIDATE);
     assert(msync_ret == ESP_OK);
 #endif
     return need_yield;
@@ -127,15 +132,15 @@ static IRAM_ATTR bool adc_dma_intr(adc_continuous_ctx_t *adc_digi_ctx)
 
 static int8_t adc_digi_get_io_num(adc_unit_t adc_unit, uint8_t adc_channel)
 {
-    assert(adc_unit < SOC_ADC_PERIPH_NUM);
-    uint8_t adc_n = (adc_unit == ADC_UNIT_1) ? 0 : 1;
-    return adc_channel_io_map[adc_n][adc_channel];
+    if (adc_unit >= 0 && adc_unit < SOC_ADC_PERIPH_NUM) {
+        return adc_channel_io_map[adc_unit][adc_channel];
+    }
+    return -1;
 }
 
 static esp_err_t adc_digi_gpio_init(adc_unit_t adc_unit, uint16_t channel_mask)
 {
     esp_err_t ret = ESP_OK;
-    uint64_t gpio_mask = 0;
     uint32_t n = 0;
     int8_t io = 0;
 
@@ -145,18 +150,11 @@ static esp_err_t adc_digi_gpio_init(adc_unit_t adc_unit, uint16_t channel_mask)
             if (io < 0) {
                 return ESP_ERR_INVALID_ARG;
             }
-            gpio_mask |= BIT64(io);
+            gpio_config_as_analog(io);
         }
         channel_mask = channel_mask >> 1;
         n++;
     }
-
-    gpio_config_t cfg = {
-        .pin_bit_mask = gpio_mask,
-        .mode = GPIO_MODE_DISABLE,
-    };
-    ret = gpio_config(&cfg);
-
     return ret;
 }
 
@@ -201,6 +199,13 @@ esp_err_t adc_continuous_new_handle(const adc_continuous_handle_cfg_t *hdl_confi
     uint32_t dma_desc_num_per_frame = (hdl_config->conv_frame_size + DMA_DESCRIPTOR_BUFFER_MAX_SIZE_4B_ALIGNED - 1) / DMA_DESCRIPTOR_BUFFER_MAX_SIZE_4B_ALIGNED;
     uint32_t dma_desc_max_num = dma_desc_num_per_frame * INTERNAL_BUF_NUM;
     adc_ctx->hal.rx_desc = heap_caps_aligned_calloc(ADC_DMA_DESC_ALIGN, dma_desc_max_num, sizeof(dma_descriptor_t), MALLOC_CAP_INTERNAL | MALLOC_CAP_DMA | MALLOC_CAP_8BIT);
+
+#if SOC_CACHE_INTERNAL_MEM_VIA_L1CACHE
+    //adc_desc_size should be aligned with cache line size
+    uint32_t cache_line_size = cache_hal_get_cache_line_size(CACHE_LL_LEVEL_INT_MEM, CACHE_TYPE_DATA);
+    adc_ctx->adc_desc_size = ((dma_desc_max_num * sizeof(dma_descriptor_t) + cache_line_size - 1) / cache_line_size) * cache_line_size;
+#endif
+
     if (!adc_ctx->hal.rx_desc) {
         ret = ESP_ERR_NO_MEM;
         goto cleanup;
@@ -240,11 +245,6 @@ esp_err_t adc_continuous_new_handle(const adc_continuous_handle_cfg_t *hdl_confi
 
     adc_apb_periph_claim();
 
-#if SOC_ADC_CALIBRATION_V1_SUPPORTED
-    adc_hal_calibration_init(ADC_UNIT_1);
-    adc_hal_calibration_init(ADC_UNIT_2);
-#endif  //#if SOC_ADC_CALIBRATION_V1_SUPPORTED
-
     return ret;
 
 cleanup:
@@ -256,6 +256,8 @@ esp_err_t adc_continuous_start(adc_continuous_handle_t handle)
 {
     ESP_RETURN_ON_FALSE(handle, ESP_ERR_INVALID_STATE, ADC_TAG, "The driver isn't initialised");
     ESP_RETURN_ON_FALSE(handle->fsm == ADC_FSM_INIT, ESP_ERR_INVALID_STATE, ADC_TAG, "ADC continuous mode isn't in the init state, it's started already");
+
+    ANALOG_CLOCK_ENABLE();
 
     //reset ADC digital part to reset ADC sampling EOF counter
     ADC_BUS_CLK_ATOMIC() {
@@ -278,9 +280,11 @@ esp_err_t adc_continuous_start(adc_continuous_handle_t handle)
 
 #if SOC_ADC_CALIBRATION_V1_SUPPORTED
     if (handle->use_adc1) {
+        adc_hal_calibration_init(ADC_UNIT_1);
         adc_set_hw_calibration_code(ADC_UNIT_1, handle->adc1_atten);
     }
     if (handle->use_adc2) {
+        adc_hal_calibration_init(ADC_UNIT_2);
         adc_set_hw_calibration_code(ADC_UNIT_2, handle->adc2_atten);
     }
 #endif  //#if SOC_ADC_CALIBRATION_V1_SUPPORTED
@@ -316,7 +320,9 @@ esp_err_t adc_continuous_start(adc_continuous_handle_t handle)
     }
 
     adc_hal_digi_init(&handle->hal);
-
+#if !CONFIG_IDF_TARGET_ESP32
+    esp_clk_tree_enable_src((soc_module_clk_t)(handle->hal_digi_ctrlr_cfg.clk_src), true);
+#endif
     adc_hal_digi_controller_config(&handle->hal, &handle->hal_digi_ctrlr_cfg);
     adc_hal_digi_enable(false);
 
@@ -367,6 +373,8 @@ esp_err_t adc_continuous_stop(adc_continuous_handle_t handle)
     if (handle->pm_lock) {
         ESP_RETURN_ON_ERROR(esp_pm_lock_release(handle->pm_lock), ADC_TAG, "release pm_lock failed");
     }
+
+    ANALOG_CLOCK_DISABLE();
 
     return ESP_OK;
 }

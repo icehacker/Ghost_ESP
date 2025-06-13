@@ -12,4 +12,5 @@
  * @brief Supported calibration schemes
  */
 
-#define ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED    1
+//TODO: [ESP32H21] IDF-11590
+// #define ADC_CALI_SCHEME_CURVE_FITTING_SUPPORTED    1
