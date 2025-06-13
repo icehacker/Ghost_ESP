@@ -1,0 +1,14 @@
+#ifndef INFRARED_PROTOCOLS_H
+#define INFRARED_PROTOCOLS_H
+
+#include "infrared_common.h"
+
+extern const InfraredCommonProtocolSpec infrared_protocol_nec;
+extern const InfraredCommonProtocolSpec infrared_protocol_kaseikyo;
+extern const InfraredCommonProtocolSpec infrared_protocol_pioneer;
+extern const InfraredCommonProtocolSpec infrared_protocol_rca;
+extern const InfraredCommonProtocolSpec infrared_protocol_samsung;
+extern const InfraredCommonProtocolSpec infrared_protocol_sirc;
+// TODO: extern declarations for other protocols
+
+#endif // INFRARED_PROTOCOLS_H 
