@@ -22,6 +22,7 @@
   - Enable Cardputer's LED in config - @tototo31
   - Get cardputer keys working - @tototo31
   - Use backtick key to return to main menu 
+  - Get cardputer battery status working - @tototo31
 
 - Attacks
   - Deauth Attack now supports targeting multiple APs

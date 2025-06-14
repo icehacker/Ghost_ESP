@@ -205,8 +205,7 @@ void initAdc(){
 bool _isCharging = false;
 int getBattery() {
     uint8_t percent;
-    static uint32_t lastVolt = 5000;
-    static unsigned long lastTime = 0;
+    static int lastVolt = 0; // track previous voltage reading in mV
 
     if(!adcInit){
       ESP_LOGI(TAG, "INIT ADC");
@@ -226,13 +225,18 @@ int getBattery() {
     ESP_LOGI(TAG, "Raw ADC to voltage - Raw: %d - Voltage: %dmv \n", raw, volt);
     }
 
-    //is charging logic
-    if (xTaskGetTickCount() - lastTime > 30000) {
-        if (lastVolt < volt) _isCharging = true;
-        else _isCharging = false;
-        lastTime = xTaskGetTickCount();
-        lastVolt = volt;
+    // improved charging detection logic: treat as charging when voltage rises beyond noise threshold
+    const int CHARGE_THRESHOLD_MV = 15; // ignore small ADC noise <15 mV
+    if (lastVolt == 0) {
+        lastVolt = volt; // first reading baseline
     }
+    int diff = volt - lastVolt;
+    if (diff > CHARGE_THRESHOLD_MV) {
+        _isCharging = true;
+    } else if (diff < -CHARGE_THRESHOLD_MV) {
+        _isCharging = false;
+    }
+    lastVolt = volt;
     float mv = volt * 2; // x2 since the voltage divider gives us 1/2 vbatt
     percent = (mv - 3300) * 100 / (float)(4150 - 3350);
 
