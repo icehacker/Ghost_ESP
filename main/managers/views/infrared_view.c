@@ -195,6 +195,111 @@ static void universal_transmit_task(void *arg) {
 }
 
 static void back_event_cb(lv_event_t *e) {
+    if (showing_commands) {
+        // if currently showing commands, return to file list
+        showing_commands = false;
+
+        // free command-related resources
+        if (!in_universals_mode && signals) {
+            infrared_manager_free_list(signals, signal_count);
+            signals = NULL;
+            signal_count = 0;
+        }
+        if (in_universals_mode && uni_command_names) {
+            for (size_t i = 0; i < uni_command_count; i++) free(uni_command_names[i]);
+            free(uni_command_names);
+            uni_command_names = NULL;
+            uni_command_count = 0;
+        }
+
+        // rebuild file list
+        lv_obj_clean(list);
+        num_ir_items = ir_file_count;
+        selected_ir_index = 0;
+        for (size_t i = 0; i < ir_file_count; i++) {
+            lv_obj_t *btn = lv_list_add_btn(list, NULL, ir_file_paths[i]);
+            lv_obj_set_width(btn, LV_HOR_RES);
+            lv_obj_set_style_bg_color(btn, lv_color_hex(0x1E1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_radius(btn, 0, LV_PART_MAIN);
+            lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+            lv_obj_t *label = lv_obj_get_child(btn, 0);
+            if (label) {
+                lv_obj_set_style_text_font(label, &lv_font_montserrat_14, 0);
+                lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), 0);
+            }
+            lv_obj_add_event_cb(btn, file_event_cb, LV_EVENT_CLICKED, (void*)(intptr_t)i);
+        }
+        if (num_ir_items > 0) ir_select_item(0);
+        return;
+    }
+
+    // if we are in a file list (remotes or universals) but not at top-level, go back to top-level menu
+    if (!has_remotes_option || !has_universals_option) {
+        // cancel any ongoing universal transmission
+        if (universal_task_handle) {
+            universal_transmit_cancel = true;
+        }
+
+        // free resources from file list level
+        if (signals) {
+            infrared_manager_free_list(signals, signal_count);
+            signals = NULL;
+            signal_count = 0;
+        }
+        if (ir_file_paths) {
+            for (size_t i = 0; i < ir_file_count; i++) free(ir_file_paths[i]);
+            free(ir_file_paths);
+            ir_file_paths = NULL;
+            ir_file_count = 0;
+        }
+        if (uni_command_names) {
+            for (size_t i = 0; i < uni_command_count; i++) free(uni_command_names[i]);
+            free(uni_command_names);
+            uni_command_names = NULL;
+            uni_command_count = 0;
+        }
+
+        in_universals_mode = false;
+        has_remotes_option = true;
+        has_universals_option = true;
+        strcpy(current_dir, "/mnt/ghostesp");
+
+        // rebuild the top-level list
+        lv_obj_clean(list);
+        lv_obj_t *remotes_btn = lv_list_add_btn(list, NULL, "Remotes");
+        lv_obj_set_width(remotes_btn, LV_HOR_RES);
+        lv_obj_set_style_bg_color(remotes_btn, lv_color_hex(0x1E1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(remotes_btn, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(remotes_btn, 0, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(remotes_btn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_t *rem_label = lv_obj_get_child(remotes_btn, 0);
+        if (rem_label) {
+            lv_obj_set_style_text_font(rem_label, &lv_font_montserrat_14, 0);
+            lv_obj_set_style_text_color(rem_label, lv_color_hex(0xFFFFFF), 0);
+        }
+        lv_obj_add_event_cb(remotes_btn, remotes_event_cb, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t *universals_btn = lv_list_add_btn(list, NULL, "Universals");
+        lv_obj_set_width(universals_btn, LV_HOR_RES);
+        lv_obj_set_style_bg_color(universals_btn, lv_color_hex(0x1E1E1E), LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_border_width(universals_btn, 0, LV_PART_MAIN);
+        lv_obj_set_style_radius(universals_btn, 0, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(universals_btn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_t *uni_label = lv_obj_get_child(universals_btn, 0);
+        if (uni_label) {
+            lv_obj_set_style_text_font(uni_label, &lv_font_montserrat_14, 0);
+            lv_obj_set_style_text_color(uni_label, lv_color_hex(0xFFFFFF), 0);
+        }
+        lv_obj_add_event_cb(universals_btn, universals_event_cb, LV_EVENT_CLICKED, NULL);
+
+        num_ir_items = (has_remotes_option ? 1 : 0) + (has_universals_option ? 1 : 0);
+        selected_ir_index = 0;
+        if (num_ir_items > 0) ir_select_item(0);
+        return;
+    }
+
+    // default: leave view
     display_manager_switch_view(&main_menu_view);
 }
 
