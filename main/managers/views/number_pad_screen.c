@@ -177,7 +177,7 @@ static void handle_hardware_button_press_number_pad(InputEvent *event) {
         int key_value = event->data.key_value;
         bool is_numeric = false;
         int option_index;
-        char *key_str[1];
+        char key_str[2];
         ESP_LOGI(TAG, "Keyboard event: %c pressed", key_value);
         sprintf(key_str, "%c", key_value); // convert key_value to str for comparisons
         int prev_cursor_pos = cursor_pos;

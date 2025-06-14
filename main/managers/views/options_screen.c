@@ -19,9 +19,6 @@
 static const char *TAG = "optionsScreen";
 
 
-static const char *TAG = "options_screen";
-
-
 EOptionsMenuType SelectedMenuType = OT_Wifi;
 int selected_item_index = 0;
 lv_obj_t *root = NULL;
