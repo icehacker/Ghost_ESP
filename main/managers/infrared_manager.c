@@ -438,89 +438,59 @@ static const InfraredCommonProtocolSpec* infrared_manager_get_protocol_spec(cons
 
 static bool send_rmt(const uint32_t *timings, size_t count, uint32_t freq, float duty) {
     size_t item_count = (count + 1) / 2;
-    size_t block_symbols = item_count;
-    if (block_symbols < 48) block_symbols = 48;
-    if (block_symbols % 2 != 0) block_symbols++;
-    ESP_LOGI(TAG_IR_MANAGER, "send_rmt: count=%zu, item_count=%zu, block_symbols=%zu, freq=%" PRIu32 ", duty=%.2f", count, item_count, block_symbols, freq, duty);
-    rmt_symbol_word_t *symbols = heap_caps_malloc(block_symbols * sizeof(rmt_symbol_word_t), MALLOC_CAP_DMA);
-    if (!symbols) {
-        ESP_LOGE(TAG_IR_MANAGER, "send_rmt: failed to allocate symbols");
-        return false;
+    size_t block_symbols = item_count < 48 ? 48 : item_count;
+    if (block_symbols % 2) block_symbols++;
+
+    static rmt_channel_handle_t tx_chan = NULL;
+    static rmt_encoder_handle_t copy_encoder = NULL;
+    static size_t chan_symbols = 0;
+
+    if (tx_chan && block_symbols > chan_symbols) {
+        rmt_disable(tx_chan);
+        rmt_del_channel(tx_chan);
+        tx_chan = NULL;
+        chan_symbols = 0;
     }
+
+    if (!tx_chan) {
+        rmt_tx_channel_config_t cfg = {
+            .clk_src = RMT_CLK_SRC_DEFAULT,
+#ifdef CONFIG_HAS_INFRARED
+            .gpio_num = CONFIG_INFRARED_LED_PIN,
+#else
+            .gpio_num = GPIO_NUM_NC,
+#endif
+            .mem_block_symbols = block_symbols,
+            .resolution_hz = 1000000,
+            .trans_queue_depth = 1,
+            .flags = {.with_dma = true, .invert_out = false}
+        };
+        if (rmt_new_tx_channel(&cfg, &tx_chan) != ESP_OK) return false;
+        if (rmt_enable(tx_chan) != ESP_OK) return false;
+        chan_symbols = block_symbols;
+    }
+
+    if (!copy_encoder) {
+        if (rmt_new_copy_encoder(&(rmt_copy_encoder_config_t) {}, &copy_encoder) != ESP_OK) return false;
+    }
+
+    rmt_carrier_config_t carrier = {.frequency_hz = freq, .duty_cycle = duty, .flags.polarity_active_low = false};
+    if (rmt_apply_carrier(tx_chan, &carrier) != ESP_OK) return false;
+
+    rmt_symbol_word_t *symbols = heap_caps_malloc(block_symbols * sizeof(rmt_symbol_word_t), MALLOC_CAP_DMA);
+    if (!symbols) return false;
     for (size_t i = 0; i < item_count; i++) {
         symbols[i].level0 = 1;
         symbols[i].duration0 = timings[2 * i];
         symbols[i].level1 = 0;
         symbols[i].duration1 = (2 * i + 1 < count) ? timings[2 * i + 1] : 0;
     }
-    rmt_tx_channel_config_t tx_chan_config = {
-        .clk_src = RMT_CLK_SRC_DEFAULT,
-#ifdef CONFIG_HAS_INFRARED
-        .gpio_num = CONFIG_INFRARED_LED_PIN,
-#else
-        .gpio_num = GPIO_NUM_NC,
-#endif
-        .mem_block_symbols = block_symbols,
-        .resolution_hz = 1000000,
-        .trans_queue_depth = 1,
-        .flags = {
-            .with_dma = true,
-            .invert_out = false
-        }
-    };
-    rmt_channel_handle_t tx_chan = NULL;
-    esp_err_t err = rmt_new_tx_channel(&tx_chan_config, &tx_chan);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG_IR_MANAGER, "send_rmt: rmt_new_tx_channel failed: %s", esp_err_to_name(err));
-        heap_caps_free(symbols);
-        return false;
-    }
-    ESP_LOGI(TAG_IR_MANAGER, "send_rmt: channel created");
-    err = rmt_enable(tx_chan);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG_IR_MANAGER, "send_rmt: rmt_enable failed: %s", esp_err_to_name(err));
-    } else {
-        ESP_LOGI(TAG_IR_MANAGER, "send_rmt: channel enabled");
-        rmt_carrier_config_t carrier_cfg = {
-            .frequency_hz = freq,
-            .duty_cycle = duty,
-            .flags.polarity_active_low = false
-        };
-        err = rmt_apply_carrier(tx_chan, &carrier_cfg);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG_IR_MANAGER, "send_rmt: rmt_apply_carrier failed: %s", esp_err_to_name(err));
-        } else {
-            ESP_LOGI(TAG_IR_MANAGER, "send_rmt: carrier applied");
-        }
-        rmt_copy_encoder_config_t copy_config = {};
-        rmt_encoder_handle_t copy_encoder = NULL;
-        err = rmt_new_copy_encoder(&copy_config, &copy_encoder);
-        if (err != ESP_OK) {
-            ESP_LOGE(TAG_IR_MANAGER, "send_rmt: rmt_new_copy_encoder failed: %s", esp_err_to_name(err));
-        } else {
-            ESP_LOGI(TAG_IR_MANAGER, "send_rmt: copy encoder created");
-            err = rmt_transmit(tx_chan, copy_encoder, symbols, item_count * sizeof(rmt_symbol_word_t), &(rmt_transmit_config_t){.loop_count = 0});
-            rmt_del_encoder(copy_encoder);
-            if (err != ESP_OK) {
-                ESP_LOGE(TAG_IR_MANAGER, "send_rmt: rmt_transmit failed: %s", esp_err_to_name(err));
-            } else {
-                ESP_LOGI(TAG_IR_MANAGER, "send_rmt: transmit OK");
-                err = rmt_tx_wait_all_done(tx_chan, pdMS_TO_TICKS(1000));
-                if (err != ESP_OK) {
-                    ESP_LOGE(TAG_IR_MANAGER, "send_rmt: wait_all_done failed: %s", esp_err_to_name(err));
-                } else {
-                    ESP_LOGI(TAG_IR_MANAGER, "send_rmt: wait_all_done OK");
-                    err = rmt_disable(tx_chan);
-                    if (err != ESP_OK) {
-                        ESP_LOGE(TAG_IR_MANAGER, "send_rmt: rmt_disable failed: %s", esp_err_to_name(err));
-                    }
-                }
-            }
-        }
-    }
-    rmt_del_channel(tx_chan);
+
+    esp_err_t err = rmt_transmit(tx_chan, copy_encoder, symbols, item_count * sizeof(rmt_symbol_word_t), &(rmt_transmit_config_t){.loop_count = 0});
+    if (err == ESP_OK) err = rmt_tx_wait_all_done(tx_chan, pdMS_TO_TICKS(1000));
+
     heap_caps_free(symbols);
-    return (err == ESP_OK);
+    return err == ESP_OK;
 }
 
 bool infrared_manager_transmit(const infrared_signal_t *signal) {
