@@ -198,16 +198,33 @@ void move_focus(bool direction){ // direction == true for down false for up
 static void event_handler(InputEvent *ev) {
     if (ev->type == INPUT_TYPE_KEYBOARD) {
         uint8_t keyValue = ev->data.key_value;
+        SettingsMenuItem *item = lv_obj_get_user_data(menu_buttons[selected_menu_idx]);
 
         if ((keyValue == 44 || keyValue == ',') || (keyValue == 59 || keyValue == ';')) { // Left / up
             ESP_LOGI(TAG, "Left/Up button pressed\n");
-            move_focus(false);
+            if (item->setting_idx >= 0) {
+                change_setting(item->setting_idx, false); // Decrement setting
+            } else {
+                move_focus(false);
+            }
         } else if ((keyValue == 47 || keyValue == '/') || (keyValue == 46 || keyValue == '.')) { // Right / down
             ESP_LOGI(TAG, "Right/Down button pressed\n");
-            move_focus(true);
+            if (item->setting_idx >= 0) {
+                change_setting(item->setting_idx, true); // Increment setting
+            } else {
+                move_focus(true);
+            }
         } else if (keyValue == 40) { // Select
             ESP_LOGI(TAG, "Enter button pressed\n");
-            lv_event_send(menu_buttons[selected_menu_idx], LV_EVENT_CLICKED, NULL);
+            if (item->submenu) {
+                if (menu_stack_top < 9) {
+                    menu_stack[++menu_stack_top].items = item->submenu;
+                    menu_stack[menu_stack_top].count = item->submenu_count;
+                }
+                populate_menu(item->submenu, item->submenu_count);
+            } else if (item->setting_idx >= 0) {
+                change_setting(item->setting_idx, true);
+            }
         } else if (keyValue == 29 || keyValue == '`') { // esc
             ESP_LOGI(TAG, "Esc button pressed\n");
             if (back_btn) {

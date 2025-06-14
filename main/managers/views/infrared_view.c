@@ -370,6 +370,37 @@ void infrared_view_input_cb(InputEvent *event) {
                 command_event_execute(selected_ir_index);
             }
         }
+    } else if (event->type == INPUT_TYPE_KEYBOARD) {
+        uint8_t keyValue = event->data.key_value;
+
+        if ((keyValue == 44 || keyValue == ',') || (keyValue == 59 || keyValue == ';')) { // Left / up
+            ESP_LOGI(TAG, "Keyboard Left/Up button pressed\n");
+            ir_select_item(selected_ir_index - 1);
+        } else if ((keyValue == 47 || keyValue == '/') || (keyValue == 46 || keyValue == '.')) { // Right / down
+            ESP_LOGI(TAG, "Keyboard Right/Down button pressed\n");
+            ir_select_item(selected_ir_index + 1);
+        } else if (keyValue == 40) { // Select
+            ESP_LOGI(TAG, "Keyboard Enter button pressed\n");
+            if (!showing_commands) {
+                if (has_remotes_option && selected_ir_index == 0) {
+                    ESP_LOGI(TAG, "Keyboard Enter pressed on Remotes, opening remotes directory");
+                    remotes_event_cb(NULL);
+                } else if (has_universals_option && selected_ir_index == (has_remotes_option ? 1 : 0)) {
+                    ESP_LOGI(TAG, "Keyboard Enter pressed on Universals, opening universals directory");
+                    universals_event_cb(NULL);
+                } else {
+                    int file_idx = selected_ir_index - ((has_remotes_option ? 1 : 0) + (has_universals_option ? 1 : 0));
+                    ESP_LOGI(TAG, "Keyboard Enter pressed, opening selected file at index %d", file_idx);
+                    file_event_open(file_idx);
+                }
+            } else {
+                ESP_LOGI(TAG, "Keyboard Enter pressed, executing selected command at index %d", selected_ir_index);
+                command_event_execute(selected_ir_index);
+            }
+        } else if (keyValue == 29 || keyValue == '`') { // esc
+            ESP_LOGI(TAG, "Keyboard Esc button pressed\n");
+            back_event_cb(NULL);
+        }
     }
 }
 
