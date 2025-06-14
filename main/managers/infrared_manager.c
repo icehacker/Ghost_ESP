@@ -525,7 +525,7 @@ static bool send_rmt(const uint32_t *timings, size_t count, uint32_t freq, float
 
 bool infrared_manager_transmit(const infrared_signal_t *signal) {
     if (!signal) return false;
-    printf("transmitting IR signal (name: %s)\n", signal->name);
+    ESP_LOGI(TAG_IR_MANAGER, "transmitting IR signal (name: %s)", signal->name);
 #ifdef CONFIG_HAS_INFRARED
     gpio_set_level(CONFIG_INFRARED_LED_PIN, 1);
 #endif
@@ -553,18 +553,15 @@ bool infrared_manager_transmit(const infrared_signal_t *signal) {
                 InfraredStatus st;
                 uint32_t dur;
                 bool level;
-                // skip initial silence
                 st = infrared_common_encode(enc, &dur, &level);
                 while (st == InfraredStatusOk && level == false) {
                     st = infrared_common_encode(enc, &dur, &level);
                 }
                 if (st == InfraredStatusOk) {
-                    // collect primary frame durations
                     do {
                         timings[timing_count++] = dur;
                         st = infrared_common_encode(enc, &dur, &level);
                     } while (st == InfraredStatusOk && timing_count < max_timings);
-                    // include final duration if Done
                     if (st == InfraredStatusDone && timing_count < max_timings) {
                         timings[timing_count++] = dur;
                     }
@@ -586,7 +583,7 @@ bool infrared_manager_transmit(const infrared_signal_t *signal) {
     gpio_set_level(CONFIG_INFRARED_LED_PIN, 0);
 #endif
     rgb_manager_set_color(&rgb_manager, -1, 0, 0, 0, false);
-    printf("ir signal transmission complete (name: %s, status: %s)\n", signal->name, ok ? "OK" : "FAIL");
+    ESP_LOGI(TAG_IR_MANAGER, "ir signal transmission complete (name: %s, status: %s)", signal->name, ok ? "OK" : "FAIL");
     return ok;
 }
 
