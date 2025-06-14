@@ -9,8 +9,6 @@
 
 static const char *TAG = "AppGalleryScreen";
 
-static const char *TAG = "app_gallery_screen";
-
 lv_obj_t *apps_container;
 static int selected_app_index = 0;
 
