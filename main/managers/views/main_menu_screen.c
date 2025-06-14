@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include "managers/views/clock_screen.h"
 #include "managers/views/settings_screen.h"
+#if CONFIG_HAS_INFRARED
+#include "managers/views/infrared_view.h"
+#endif
 
 static const char *TAG = "MainMenu";
 
@@ -33,6 +36,9 @@ menu_item_t menu_items[] = {
     {"WiFi", &wifi, 1}, // applies to all boards
 #ifdef CONFIG_HAS_GPS
     {"GPS", &Map, 2},
+#endif
+#if CONFIG_HAS_INFRARED
+    {"Infrared", &infrared, 0}, // main infrared icon
 #endif
     {"Apps", &GESPAppGallery, 3}, // applies to all boards
 #ifdef CONFIG_HAS_RTC_CLOCK
@@ -217,6 +223,9 @@ static void handle_menu_item_selection(int item_index) {
         {"WiFi", OT_Wifi, &options_menu_view},
 #ifdef CONFIG_HAS_GPS
         {"GPS", OT_GPS, &options_menu_view},
+#endif
+#if CONFIG_HAS_INFRARED
+        {"Infrared", 0, &infrared_view},
 #endif
         {"Apps", 0, &apps_menu_view},
 #ifdef CONFIG_HAS_RTC_CLOCK
