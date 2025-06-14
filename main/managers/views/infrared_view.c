@@ -41,6 +41,7 @@ typedef struct {
     char path[256];
     char command[32];
 } UniversalTransmitArgs_t;
+static void ir_select_item(int index);
 
 // touchscreen controls
 #ifdef CONFIG_USE_TOUCHSCREEN
@@ -63,7 +64,6 @@ static QueueHandle_t universals_queue = NULL;
 static TaskHandle_t universals_task_handle = NULL;
 
 // forward declarations
-static void ir_select_item(int index);
 static void back_event_cb(lv_event_t *e);
 static void file_event_open(int idx);
 static void command_event_execute(int idx);
