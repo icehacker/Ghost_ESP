@@ -13,6 +13,9 @@
   - Allow selection of multiple APs (eg. select -a 2,3,4)
   TODO - add comma to display numpad
 
+- Cardputer
+  - Add keyboard event handling functionality - @tototo31
+
 ### Changed
 
 - Cardputer
@@ -22,6 +25,7 @@
 
 - Attacks
   - Deauth Attack now supports targeting multiple APs
+
 
 - RGB
   - Enable Cardputer's LED in config - @tototo31
