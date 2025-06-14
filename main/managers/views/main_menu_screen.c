@@ -152,12 +152,32 @@ static void update_menu_item(bool slide_left) {
     lv_anim_set_exec_cb(&a, anim_set_x);
     lv_anim_start(&a);
 }
+/**
+ *  @brief handles keyboard button presses
+ */
 
+void handle_keyboard_interactions(int keyValue){
+
+    if (keyValue == 44 || keyValue == ',') { // Left
+        ESP_LOGI(TAG, "Left button pressed\n");
+        select_menu_item(selected_item_index - 1, true);
+    } else if (keyValue == 47 || keyValue == '/') { // Right
+        ESP_LOGI(TAG, "Right button pressed\n");
+        select_menu_item(selected_item_index + 1, false);
+    } else if (keyValue == 40) { // Select
+        ESP_LOGI(TAG, "Enter button pressed\n");
+        handle_menu_item_selection(selected_item_index);
+    } else if (keyValue == 29 || keyValue == '`') { // esc
+        ESP_LOGI(TAG, "Esc button pressed\n");
+    }
+
+}
 /**
  * @brief Combined handler for menu item events.
  */
 static void menu_item_event_handler(InputEvent *event) {
     if (event->type == INPUT_TYPE_TOUCH) {
+        ESP_LOGI(TAG, "Touch event");
         lv_indev_data_t *data = &event->data.touch_data;
         if (data->state == LV_INDEV_STATE_PR) {
             touch_started = true;
@@ -178,8 +198,12 @@ static void menu_item_event_handler(InputEvent *event) {
             }
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
+        ESP_LOGI(TAG, "Joystick event");
         int button = event->data.joystick_index;
         handle_hardware_button_press(button);
+    } else if (event->type == INPUT_TYPE_KEYBOARD) {
+        ESP_LOGI(TAG, "keyboard event");
+        handle_keyboard_interactions(event->data.key_value);
     }
 }
 
@@ -195,6 +219,8 @@ void handle_hardware_button_press(int ButtonPressed) {
         handle_menu_item_selection(selected_item_index);
     }
 }
+
+
 
 /**
  * @brief Selects a menu item and updates the display.

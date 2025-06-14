@@ -5,20 +5,6 @@
 
 ### Added
 
-- IR Support
-  - Uses FlipperZero formatted IR files
-  - Universal Library IR Transmit
-  - Signals File IR Transmit
-  - IR Protocol Encoders:
-    - NEC
-    - Kaseikyo
-    - Pioneer
-    - RCA
-    - Samsung
-    - SIRC
-    - RC5
-    - RC6
-
 - Attacks
   - EAPOL Logoff Attack
   - SAE Flood Attack
@@ -26,6 +12,9 @@
 - Commands
   - Allow selection of multiple APs (eg. select -a 2,3,4)
   TODO - add comma to display numpad
+
+- Cardputer
+  - Add keyboard event handling functionality - @tototo31
 
 ### Changed
 
@@ -36,6 +25,7 @@
 
 - Attacks
   - Deauth Attack now supports targeting multiple APs
+
 
 - RGB
   - Enable Cardputer's LED in config - @tototo31
@@ -49,8 +39,6 @@
 - WiFi
   - preserve STA mode in ap_manager init and start_services
 
-- Commands
-  - Add setcountry command to the help command (C5 only)
 
 
 ## Revival v1.5.1

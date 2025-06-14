@@ -26,12 +26,14 @@ static const char *TAG_IR_MANAGER = "infrared_manager";
 
 bool infrared_manager_init(void) {
     bool ok = sd_card_manager.is_initialized;
+#ifdef CONFIG_HAS_INFRARED
     if (ok && CONFIG_HAS_INFRARED) {
         gpio_reset_pin(CONFIG_INFRARED_LED_PIN);
         gpio_set_direction(CONFIG_INFRARED_LED_PIN, GPIO_MODE_OUTPUT);
         gpio_set_level(CONFIG_INFRARED_LED_PIN, 0);
         ESP_LOGI(TAG_IR_MANAGER, "IR LED pin initialized: %d", CONFIG_INFRARED_LED_PIN);
     }
+#endif
     return ok;
 }
 
@@ -453,7 +455,11 @@ static bool send_rmt(const uint32_t *timings, size_t count, uint32_t freq, float
     }
     rmt_tx_channel_config_t tx_chan_config = {
         .clk_src = RMT_CLK_SRC_DEFAULT,
+#ifdef CONFIG_HAS_INFRARED
         .gpio_num = CONFIG_INFRARED_LED_PIN,
+#else
+        .gpio_num = GPIO_NUM_NC,
+#endif
         .mem_block_symbols = block_symbols,
         .resolution_hz = 1000000,
         .trans_queue_depth = 1,
@@ -520,7 +526,9 @@ static bool send_rmt(const uint32_t *timings, size_t count, uint32_t freq, float
 bool infrared_manager_transmit(const infrared_signal_t *signal) {
     if (!signal) return false;
     printf("transmitting IR signal (name: %s)\n", signal->name);
+#ifdef CONFIG_HAS_INFRARED
     gpio_set_level(CONFIG_INFRARED_LED_PIN, 1);
+#endif
     rgb_manager_set_color(&rgb_manager, -1, 255, 0, 255, false);
     bool ok = false;
     if (signal->is_raw) {
@@ -574,7 +582,9 @@ bool infrared_manager_transmit(const infrared_signal_t *signal) {
             ok = false;
         }
     }
+#ifdef CONFIG_HAS_INFRARED
     gpio_set_level(CONFIG_INFRARED_LED_PIN, 0);
+#endif
     rgb_manager_set_color(&rgb_manager, -1, 0, 0, 0, false);
     printf("ir signal transmission complete (name: %s, status: %s)\n", signal->name, ok ? "OK" : "FAIL");
     return ok;

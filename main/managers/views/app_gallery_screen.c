@@ -5,8 +5,9 @@
 #include "esp_log.h"
 #include <stdio.h>
 #include <string.h>
+#include "esp_log.h"
 
-static const char *TAG = "app_gallery_screen";
+static const char *TAG = "AppGalleryScreen";
 
 lv_obj_t *apps_container;
 static int selected_app_index = 0;
@@ -204,10 +205,33 @@ static void handle_apps_button_press(int button) {
 }
 
 /**
+ *  @brief handles keyboard button presses
+ */
+
+static void handle_keyboard_interactions(int keyValue){
+
+    if (keyValue == 44 || keyValue == ',') { // Left
+        ESP_LOGI(TAG, "Left button pressed\n");
+        select_app_item(selected_app_index - 1, true);
+    } else if (keyValue == 47 || keyValue == '/') { // Right
+        ESP_LOGI(TAG, "Right button pressed\n");
+        select_app_item(selected_app_index + 1, false);
+    } else if (keyValue == 40) { // Select
+        ESP_LOGI(TAG, "Enter button pressed\n");
+        handle_app_item_selection(selected_app_index);
+    } else if (keyValue == 29 || keyValue == '`') { // esc
+        ESP_LOGI(TAG, "Esc button pressed\n");
+        display_manager_switch_view(&main_menu_view);
+    }
+
+}
+
+/**
  * @brief Combined handler for app menu events
  */
  void apps_menu_event_handler(InputEvent *event) {
-    if (event->type == INPUT_TYPE_TOUCH) {
+    if (event->type == INPUT_TYPE_TOUCH) {\
+        ESP_LOGW(TAG, "Touch event");
         lv_indev_data_t *data = &event->data.touch_data;
         if (data->state == LV_INDEV_STATE_PR) {
             touch_started = true;
@@ -234,7 +258,11 @@ static void handle_apps_button_press(int button) {
             }
         }
     } else if (event->type == INPUT_TYPE_JOYSTICK) {
+        ESP_LOGI(TAG, "Joystick event");
         handle_apps_button_press(event->data.joystick_index);
+    } else if (event->type == INPUT_TYPE_KEYBOARD) {
+        ESP_LOGW(TAG, "keyboard event; unhandled");
+        handle_keyboard_interactions(event->data.key_value);
     }
 }
 
