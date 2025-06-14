@@ -50,7 +50,7 @@
   - preserve STA mode in ap_manager init and start_services
 
 - Commands
-
+  - Add setcountry command to the help command (C5 only)
 
 
 ## Revival v1.5.1
