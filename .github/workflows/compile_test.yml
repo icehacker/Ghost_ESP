@@ -1,4 +1,4 @@
-name: Compile Test Build esp32c5 (v5.4.1)
+name: Compile Test Build ESP32-C6 FH4M SD LCD v5.4.1
 
 on:
   workflow_dispatch: # Manual trigger
@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         target:
-          - { name: "esp32c5-generic", idf_target: "esp32c5", zip_name: "esp32c5-generic.zip" }
+          - { name: "esp32c6-fh4", idf_target: "esp32c6", zip_name: "esp32c6-fh4.zip" }
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
           git clone -b v5.4.1 --recursive https://github.com/espressif/esp-idf.git ~/esp-idf
           cd ~/esp-idf
           git submodule update --init --recursive
-          ./install.sh esp32c5 # Specify target
+          ./install.sh esp32c6 # Specify target
 
       - name: Set up ESP-IDF Environment
         run: |
@@ -42,7 +42,7 @@ jobs:
       - name: Clean and Build Project
         run: |
           . ~/esp-idf/export.sh
-          cp configs/sdkconfig.default.esp32c5 sdkconfig.defaults # Copy and rename the specific sdkconfig for esp32c5
+          cp configs/sdkconfig.default.esp32c6 sdkconfig.defaults # Copy and rename the specific sdkconfig for esp32c6
           idf.py clean
           idf.py build || {
             echo "Build failed for ${{ matrix.target.name }}"
